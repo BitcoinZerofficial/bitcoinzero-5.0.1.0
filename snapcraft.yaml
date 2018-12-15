@@ -1,0 +1,49 @@
+name: bznode
+version: "0.0.1"
+summary: Bznode for bitcoinzero project
+description: |
+ Bznodes verify transaction and are used as second layer on top of the normal nodes.
+ Bznodes must have access to 1000BZX at a specific address to play the role of Bznode otherwise they are just degraded to a regular node on the network.
+
+confinement: strict
+grade: stable
+
+apps:
+ cli:
+  command: bin/bitcoinzero-cli
+  plugs:
+    - network
+    - home
+ daemon:
+  command: bin/bitcoinzerod
+  plugs:
+    - network
+    - network-bind
+
+parts:
+ berkeley:
+  plugin: nil
+  prepare: |
+    apt-get install software-properties-common -y
+    add-apt-repository -y ppa:bitcoin/bitcoin
+    apt-get update
+    apt-get install libdb4.8-dev libdb4.8++-dev -y
+
+ libboost:
+  after: [openssl]
+  plugin: nil
+  prepare: |
+    apt-get install libboost-all-dev -y
+
+ openssl:
+  after: [berkeley]
+  plugin: nil
+  prepare: |
+    apt-get install openssl libssl-dev libevent-dev -y
+
+ cli:
+  after: [libboost]
+  plugin: autotools
+  configflags: [--without-gui]
+  source: https://github.com/bitcoinzerotakeover/bitcoinzero.git
+  source-branch: master
